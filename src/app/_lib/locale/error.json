@@ -1,0 +1,9 @@
+{
+  "500" : "정의되지 않은 서버 오류가 발생했습니다",     "InvalidServerError": 500,
+  "1000": "잘못된 이메일 주소를 입력하셨습니다",        "InvalidEmailAddress": 1000,
+  "1001": "잘못된 패스워드를 입력하셨습니다",          "InvalidPassword": 1001,
+  "1002": "잘못된 도메인 주소를 입력하셨습니다",        "UnknownEmailAddressHost": 1002,
+  "1003": "계정이나 패스워드를 잘못 입력하셨습니다",     "InvalidAccountOrPassword": 1003,
+  "1004": "이메일 서버에서 알 수 없는 오류가 발생했습니다","EmailServerError": 1004,
+  "1005": "인증되지 않은 잘못된 접근입니다",            "InvalidAccess": 1005
+}

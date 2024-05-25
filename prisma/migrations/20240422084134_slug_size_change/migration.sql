@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Community" ALTER COLUMN "slug" SET DATA TYPE VARCHAR(32);
+
+-- AlterTable
+ALTER TABLE "Group" ALTER COLUMN "slug" SET DATA TYPE VARCHAR(32);

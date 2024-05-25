@@ -1,0 +1,236 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters", "relationJoins"]
+  output          = "../src/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  name          String    @db.VarChar(32)
+  email         String    @unique @db.VarChar(255)
+  image         String    @db.VarChar(255)
+
+  positionId    Int
+  position      Position  @relation(fields: [positionId], references: [id])
+
+  groupId       Int?
+  group         Group?    @relation(fields: [groupId], references: [id])
+
+  posts         Post[]
+  postComments  PostComment[]
+
+  communities   Community[]
+  managedCommunities  Community[] @relation("CommunityManager")
+  communityFavorates  CommunityFavorate[]
+
+  chatRooms     ChatRoom[]
+  chatCommets   ChatComment[]
+
+  uploadFiles   UploadFile[]
+
+  access        LogAccess[]
+}
+
+model Position {
+  id            Int       @id @default(autoincrement())
+  name          String    @db.VarChar(32)
+  power         Int
+
+  users         User[]
+}
+
+model Group {
+  id            Int       @id @default(autoincrement())
+  order         Int
+  slug          String    @db.VarChar(32) @unique()
+  name          String    @db.VarChar(32)
+
+  parentId      Int?
+  parent        Group?    @relation("GroupParentChildren", fields: [parentId], references: [id])
+  children      Group[]   @relation("GroupParentChildren")
+
+  users         User[]
+
+  communityId   Int       @unique
+  community     Community @relation(fields: [communityId], references: [id])
+}
+
+enum CommunityCategory {
+  WORK
+  PROJECT
+  CLUB
+}
+
+model Community {
+  id              Int               @id @default(autoincrement())
+  isPrivate       Boolean           @default(false)
+  isPublicRead    Boolean           @default(false)
+  isPublicWrite   Boolean           @default(false)
+  category        CommunityCategory @default(WORK)
+  slug            String            @db.VarChar(32) @unique()
+  name            String            @db.VarChar(32)
+  introduce       String            @db.VarChar(100)
+  icon            String            @db.VarChar(255)
+  headerImage     String            @db.VarChar(255)
+  latestPostDate  DateTime?
+
+  group           Group?
+
+  posts           Post[]
+
+  managers        User[]            @relation("CommunityManager")
+
+  favorates       CommunityFavorate[]
+
+  users           User[]
+}
+
+model CommunityFavorate {
+  id              Int         @id @default(autoincrement())
+
+  userId          Int
+  user            User        @relation(fields: [userId], references: [id])
+
+  communityId     Int
+  community       Community   @relation(fields: [communityId], references: [id])
+
+  @@unique([userId, communityId])
+}
+
+model Post {
+  id            Int       @id @default(autoincrement())
+  title         String    @db.VarChar(100)
+  text          String    @db.VarChar(255)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  largeText     PostLargText?
+
+  communityId   Int
+  community     Community @relation(fields: [communityId], references: [id])
+
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id])
+
+  meta          MetaData[]
+
+  commentCnt    Int
+  comments      PostComment[]
+
+  @@index(createdAt(sort: Desc))
+  @@index(communityId)
+  @@index(userId)
+}
+
+model PostLargText {
+  id            Int       @id @default(autoincrement())
+  text          String    @db.Text()
+
+  postId        Int       @unique
+  post          Post      @relation(fields: [postId], references: [id])
+}
+
+model PostComment {
+  id            Int       @id @default(autoincrement())
+  comment       String    @db.VarChar(255)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  largeComment  PostCommentLargText?
+
+  postId        Int
+  post          Post      @relation(fields: [postId], references: [id])
+
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id])
+
+  @@index([postId, createdAt(sord: Desc)])
+  @@index([userId, createdAt(sord: Desc)])
+}
+
+model PostCommentLargText {
+  id            Int       @id @default(autoincrement())
+  text          String    @db.Text()
+
+  postCommentId Int       @unique
+  postComment PostComment @relation(fields: [postCommentId], references: [id])
+}
+
+model ChatRoom {
+  id            Int       @id @default(autoincrement())
+  createdAt     DateTime  @default(now())
+
+  user          User[]
+
+  comments      ChatComment[]
+}
+
+model ChatComment {
+  id            Int       @id @default(autoincrement())
+  comment       String    @db.VarChar(255)
+  createdAt     DateTime  @default(now())
+
+  largeComment  ChatCommentLargText?
+
+  roomId        Int
+  room          ChatRoom  @relation(fields: [roomId], references: [id])
+
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id])
+
+  metaId        Int?
+  meta          MetaData? @relation(fields: [metaId], references: [id])
+}
+
+model ChatCommentLargText {
+  id            Int       @id @default(autoincrement())
+  text          String    @db.Text()
+
+  chatCommentId Int       @unique
+  chatComment ChatComment @relation(fields: [chatCommentId], references: [id])
+}
+
+model MetaData {
+  id            Int       @id @default(autoincrement())
+  url           String    @unique @db.VarChar(255)
+  type          String    @db.VarChar(32)
+  title         String    @db.VarChar(32)
+  description   String    @db.VarChar(100)
+  image         String?   @db.VarChar(255)
+  imageAlt      String?   @db.VarChar(255)
+  video         String?   @db.VarChar(255)
+
+  posts         Post[]
+  comments      ChatComment[]
+}
+
+model UploadFile {
+  id            Int       @id @default(autoincrement())
+  filename      String    @db.VarChar(255)
+  origin        String    @db.VarChar(255)
+
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id])
+}
+
+model LogAccess {
+  id            Int       @id @default(autoincrement())
+  uuid          String    @unique @db.VarChar(64)
+  ip            String    @db.VarChar(16)
+  agent         String    @db.VarChar(100)
+  updatedAt     DateTime  @updatedAt
+
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id])
+}
